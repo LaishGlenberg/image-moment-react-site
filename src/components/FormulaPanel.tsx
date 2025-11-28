@@ -10,28 +10,71 @@ interface FormulaRowProps {
 }
 
 const FormulaRow: React.FC<FormulaRowProps> = ({ formula, value, comparisonValue, precision = 4 }) => {
-  const isMultiLine = Array. isArray(formula);
+  const isMultiLine = Array.isArray(formula);
   const hasComparison = comparisonValue !== undefined && comparisonValue !== null;
   
+  // For multi-line formulas, stack values vertically
+  if (isMultiLine) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        padding: '6px 12px',
+        borderBottom: '1px solid var(--border-color)',
+        gap: '12px',
+      }}>
+        <div style={{ flex: 1, fontSize: '14px', whiteSpace: 'nowrap' }}>
+          {formula.map((line, idx) => (
+            <div key={idx} style={{ paddingLeft: idx > 0 ? '20px' : 0, marginBottom: idx < formula.length - 1 ? '2px' : 0 }}>
+              <InlineMath math={line} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0, alignItems: 'flex-end' }}>
+          <div style={{
+            minWidth: '80px',
+            padding: '4px 10px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '4px',
+            fontFamily: 'monospace',
+            fontSize: '13px',
+            textAlign: 'right',
+          }}>
+            {isNaN(value) || !isFinite(value) ? '—' : value.toFixed(precision)}
+          </div>
+          {hasComparison && (
+            <div style={{
+              minWidth: '80px',
+              padding: '4px 10px',
+              backgroundColor: '#fee',
+              border: '1px solid #e88',
+              borderRadius: '4px',
+              fontFamily: 'monospace',
+              fontSize: '13px',
+              textAlign: 'right',
+              color: '#c00',
+            }}>
+              {isNaN(comparisonValue) || !isFinite(comparisonValue) ? '—' : comparisonValue.toFixed(precision)}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  // For single-line formulas, display values side by side
   return (
     <div style={{
       display: 'flex',
-      alignItems: isMultiLine ? 'flex-start' : 'center',
+      alignItems: 'center',
       justifyContent: 'space-between',
       padding: '6px 12px',
       borderBottom: '1px solid var(--border-color)',
       gap: '12px',
     }}>
       <div style={{ flex: 1, fontSize: '14px', whiteSpace: 'nowrap' }}>
-        {isMultiLine ? (
-          formula.map((line, idx) => (
-            <div key={idx} style={{ paddingLeft: idx > 0 ? '20px' : 0, marginBottom: idx < formula.length - 1 ? '2px' : 0 }}>
-              <InlineMath math={line} />
-            </div>
-          ))
-        ) : (
-          <InlineMath math={formula} />
-        )}
+        <InlineMath math={formula} />
       </div>
       <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
         {hasComparison && (
@@ -46,7 +89,7 @@ const FormulaRow: React.FC<FormulaRowProps> = ({ formula, value, comparisonValue
             textAlign: 'right',
             color: '#c00',
           }}>
-            {isNaN(comparisonValue) || ! isFinite(comparisonValue) ?  '—' : comparisonValue.toFixed(precision)}
+            {isNaN(comparisonValue) || !isFinite(comparisonValue) ? '—' : comparisonValue.toFixed(precision)}
           </div>
         )}
         <div style={{
@@ -58,7 +101,7 @@ const FormulaRow: React.FC<FormulaRowProps> = ({ formula, value, comparisonValue
           fontSize: '13px',
           textAlign: 'right',
         }}>
-          {isNaN(value) || !isFinite(value) ? '—' : value. toFixed(precision)}
+          {isNaN(value) || !isFinite(value) ? '—' : value.toFixed(precision)}
         </div>
       </div>
     </div>

@@ -33,7 +33,7 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
   const axisOriginX = PADDING - 15;
   const axisOriginY = svgHeight - PADDING + 15;
 
-  const hasActivePixels = pixels. some(p => p. active);
+  const hasActivePixels = pixels.some(p => p. active);
 
   // Create a set of comparison pixel coordinates for quick lookup
   const comparisonPixelSet = new Set(

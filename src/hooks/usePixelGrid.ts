@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Pixel, RawMoments, Centroid, CentralMoments, NormalizedMoments, BasicShapeDescriptors, HuMoments, SavedShape } from '../types/moments';
 import { 
   calculateRawMoments, 
@@ -15,6 +15,18 @@ interface UsePixelGridProps {
 }
 
 export function usePixelGrid({ width, height }: UsePixelGridProps) {
+
+  // Reset grid when dimensions change
+  useEffect(() => {
+    const grid: Pixel[] = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        grid.push({ x, y, active: false });
+      }
+    }
+    setPixels(grid);
+  }, [width, height]);
+
   const [pixels, setPixels] = useState<Pixel[]>(() => {
     const grid: Pixel[] = [];
     for (let y = 0; y < height; y++) {
@@ -24,6 +36,8 @@ export function usePixelGrid({ width, height }: UsePixelGridProps) {
     }
     return grid;
   });
+
+  
 
   const [savedShapes, setSavedShapes] = useState<SavedShape[]>([]);
   const [comparisonShapeId, setComparisonShapeId] = useState<string | null>(null);
