@@ -53,3 +53,15 @@ export interface HuMoments {
   h6: number;
   h7: number;
 }
+
+export interface SavedShape {
+  id: string;
+  name: string;
+  pixels: Array<{ x: number; y: number }>;
+  rawMoments: RawMoments;
+  centroid: Centroid;
+  centralMoments: CentralMoments;
+  normalizedMoments: NormalizedMoments;
+  huMoments: HuMoments;
+  basicDescriptors: BasicShapeDescriptors;
+}

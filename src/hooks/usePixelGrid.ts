@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { Pixel, RawMoments, Centroid, CentralMoments, NormalizedMoments, BasicShapeDescriptors, HuMoments } from '../types/moments';
+import type { Pixel, RawMoments, Centroid, CentralMoments, NormalizedMoments, BasicShapeDescriptors, HuMoments, SavedShape } from '../types/moments';
 import { 
   calculateRawMoments, 
   calculateCentroid, 
@@ -19,24 +19,27 @@ export function usePixelGrid({ width, height }: UsePixelGridProps) {
     const grid: Pixel[] = [];
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        grid. push({ x, y, active: false });
+        grid.push({ x, y, active: false });
       }
     }
     return grid;
   });
 
+  const [savedShapes, setSavedShapes] = useState<SavedShape[]>([]);
+  const [comparisonShapeId, setComparisonShapeId] = useState<string | null>(null);
+
   const togglePixel = useCallback((x: number, y: number) => {
     setPixels(prev => 
       prev.map(p => 
         p.x === x && p.y === y 
-          ? { ...p, active: !p.active }
+          ? { ... p, active: ! p.active }
           : p
       )
     );
   }, []);
 
   const clearGrid = useCallback(() => {
-    setPixels(prev => prev. map(p => ({ ...p, active: false })));
+    setPixels(prev => prev.map(p => ({ ...p, active: false })));
   }, []);
 
   const rawMoments: RawMoments = useMemo(
@@ -69,6 +72,41 @@ export function usePixelGrid({ width, height }: UsePixelGridProps) {
     [pixels, rawMoments, centralMoments]
   );
 
+  const saveShape = useCallback(() => {
+    const activePixels = pixels. filter(p => p.active);
+    if (activePixels. length === 0) return;
+
+    const newShape: SavedShape = {
+      id: `shape-${Date.now()}`,
+      name: `S${savedShapes.length + 1}`,
+      pixels: activePixels. map(p => ({ x: p.x, y: p. y })),
+      rawMoments,
+      centroid,
+      centralMoments,
+      normalizedMoments,
+      huMoments,
+      basicDescriptors,
+    };
+
+    setSavedShapes(prev => [...prev, newShape]);
+  }, [pixels, rawMoments, centroid, centralMoments, normalizedMoments, huMoments, basicDescriptors, savedShapes. length]);
+
+  const deleteShape = useCallback((id: string) => {
+    setSavedShapes(prev => prev.filter(s => s.id !== id));
+    if (comparisonShapeId === id) {
+      setComparisonShapeId(null);
+    }
+  }, [comparisonShapeId]);
+
+  const toggleComparison = useCallback((id: string) => {
+    setComparisonShapeId(prev => prev === id ? null : id);
+  }, []);
+
+  const comparisonShape = useMemo(
+    () => savedShapes.find(s => s.id === comparisonShapeId) || null,
+    [savedShapes, comparisonShapeId]
+  );
+
   return {
     pixels,
     togglePixel,
@@ -80,6 +118,13 @@ export function usePixelGrid({ width, height }: UsePixelGridProps) {
     huMoments,
     basicDescriptors,
     gridWidth: width,
-    gridHeight: height
+    gridHeight: height,
+    // Shape comparison
+    savedShapes,
+    saveShape,
+    deleteShape,
+    comparisonShapeId,
+    toggleComparison,
+    comparisonShape,
   };
 }

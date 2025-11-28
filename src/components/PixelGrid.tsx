@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Pixel, Centroid } from '../types/moments';
+import type { Pixel, Centroid, SavedShape } from '../types/moments';
 
 interface PixelGridProps {
   pixels: Pixel[];
@@ -8,6 +8,7 @@ interface PixelGridProps {
   onPixelClick: (x: number, y: number) => void;
   centroid: Centroid;
   showCentroid?: boolean;
+  comparisonShape?: SavedShape | null;
 }
 
 const PIXEL_RADIUS = 8;
@@ -20,7 +21,8 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
   gridHeight,
   onPixelClick,
   centroid,
-  showCentroid = true
+  showCentroid = true,
+  comparisonShape = null,
 }) => {
   const svgWidth = gridWidth * PIXEL_SPACING + PADDING * 2;
   const svgHeight = gridHeight * PIXEL_SPACING + PADDING * 2;
@@ -31,7 +33,12 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
   const axisOriginX = PADDING - 15;
   const axisOriginY = svgHeight - PADDING + 15;
 
-  const hasActivePixels = centroid.x !== 0 || centroid.y !== 0 || pixels.some(p => p.active);
+  const hasActivePixels = pixels. some(p => p. active);
+
+  // Create a set of comparison pixel coordinates for quick lookup
+  const comparisonPixelSet = new Set(
+    comparisonShape?.pixels.map(p => `${p.x},${p.y}`) || []
+  );
 
   return (
     <svg 
@@ -75,7 +82,7 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
       />
 
       {/* X-axis tick marks and labels */}
-      {Array. from({ length: gridWidth }, (_, i) => (
+      {Array.from({ length: gridWidth }, (_, i) => (
         <g key={`x-tick-${i}`}>
           <line
             x1={toSvgX(i)}
@@ -100,7 +107,7 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
       ))}
 
       {/* Y-axis tick marks and labels */}
-      {Array.from({ length: gridHeight }, (_, i) => (
+      {Array. from({ length: gridHeight }, (_, i) => (
         <g key={`y-tick-${i}`}>
           <line
             x1={axisOriginX - 4}
@@ -144,26 +151,60 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
         y
       </text>
 
-      {/* Pixel grid */}
-      {pixels.map((pixel) => (
+      {/* Comparison shape pixels (red, rendered first/behind) */}
+      {comparisonShape?. pixels.map((pixel) => (
         <circle
-          key={`${pixel.x}-${pixel.y}`}
+          key={`comparison-${pixel.x}-${pixel.y}`}
           cx={toSvgX(pixel.x)}
-          cy={toSvgY(pixel. y)}
+          cy={toSvgY(pixel.y)}
           r={PIXEL_RADIUS}
-          fill={pixel.active ? 'var(--pixel-active)' : 'var(--pixel-inactive)'}
-          stroke={pixel.active ? 'var(--pixel-active)' : '#ccc'}
+          fill="#cc0000"
+          stroke="#cc0000"
           strokeWidth={1.5}
-          style={{ cursor: 'pointer', transition: 'fill 0.15s ease' }}
-          onClick={() => onPixelClick(pixel.x, pixel.y)}
+          style={{ pointerEvents: 'none' }}
         />
       ))}
 
-      {/* Centroid marker - pointer-events: none so clicks pass through */}
+      {/* Main pixel grid */}
+      {pixels.map((pixel) => {
+        const isComparisonPixel = comparisonPixelSet.has(`${pixel.x},${pixel.y}`);
+        // If this pixel is part of comparison and not active, don't render the inactive circle
+        // to let the red one show through
+        if (isComparisonPixel && !pixel.active) {
+          return (
+            <circle
+              key={`${pixel.x}-${pixel.y}`}
+              cx={toSvgX(pixel.x)}
+              cy={toSvgY(pixel.y)}
+              r={PIXEL_RADIUS}
+              fill="transparent"
+              stroke="transparent"
+              style={{ cursor: 'pointer' }}
+              onClick={() => onPixelClick(pixel.x, pixel.y)}
+            />
+          );
+        }
+        
+        return (
+          <circle
+            key={`${pixel.x}-${pixel.y}`}
+            cx={toSvgX(pixel.x)}
+            cy={toSvgY(pixel.y)}
+            r={PIXEL_RADIUS}
+            fill={pixel.active ? 'var(--pixel-active)' : 'var(--pixel-inactive)'}
+            stroke={pixel.active ?  'var(--pixel-active)' : '#ccc'}
+            strokeWidth={1.5}
+            style={{ cursor: 'pointer', transition: 'fill 0.15s ease' }}
+            onClick={() => onPixelClick(pixel.x, pixel. y)}
+          />
+        );
+      })}
+
+      {/* Current shape centroid marker */}
       {showCentroid && hasActivePixels && (
         <g style={{ pointerEvents: 'none' }}>
           <circle
-            cx={toSvgX(centroid. x)}
+            cx={toSvgX(centroid.x)}
             cy={toSvgY(centroid.y)}
             r={5}
             fill="var(--accent-color)"
@@ -176,6 +217,29 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
             r={12}
             fill="none"
             stroke="var(--accent-color)"
+            strokeWidth={1.5}
+            strokeDasharray="4 2"
+          />
+        </g>
+      )}
+
+      {/* Comparison shape centroid marker (red) */}
+      {comparisonShape && (
+        <g style={{ pointerEvents: 'none' }}>
+          <circle
+            cx={toSvgX(comparisonShape. centroid.x)}
+            cy={toSvgY(comparisonShape. centroid.y)}
+            r={5}
+            fill="#cc0000"
+            stroke="#fff"
+            strokeWidth={2}
+          />
+          <circle
+            cx={toSvgX(comparisonShape. centroid.x)}
+            cy={toSvgY(comparisonShape. centroid.y)}
+            r={12}
+            fill="none"
+            stroke="#cc0000"
             strokeWidth={1.5}
             strokeDasharray="4 2"
           />
