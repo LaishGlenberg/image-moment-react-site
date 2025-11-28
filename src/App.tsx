@@ -6,7 +6,7 @@ import { SavedShapesList } from './components/SavedShapesList';
 import './index.css';
 
 const GRID_WIDTH = 25;
-const GRID_HEIGHT = 13;
+const GRID_HEIGHT = 15;
 
 function App() {
   const {

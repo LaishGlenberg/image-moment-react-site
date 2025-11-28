@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import type { Pixel, Centroid, SavedShape } from '../types/moments';
 
 interface PixelGridProps {
@@ -33,18 +33,59 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
   const axisOriginX = PADDING - 15;
   const axisOriginY = svgHeight - PADDING + 15;
 
-  const hasActivePixels = pixels.some(p => p. active);
+  const hasActivePixels = pixels.some(p => p.active);
 
   // Create a set of comparison pixel coordinates for quick lookup
   const comparisonPixelSet = new Set(
     comparisonShape?.pixels.map(p => `${p.x},${p.y}`) || []
   );
 
+  // Paintbrush state
+  const [isPainting, setIsPainting] = useState(false);
+  const toggledDuringStroke = useRef<Set<string>>(new Set());
+
+  const handlePixelToggle = useCallback((x: number, y: number) => {
+    const key = `${x},${y}`;
+    if (!toggledDuringStroke.current.has(key)) {
+      toggledDuringStroke.current.add(key);
+      onPixelClick(x, y);
+    }
+  }, [onPixelClick]);
+
+  const handleMouseDown = useCallback((x: number, y: number) => {
+    setIsPainting(true);
+    toggledDuringStroke.current = new Set();
+    handlePixelToggle(x, y);
+  }, [handlePixelToggle]);
+
+  const handleMouseEnter = useCallback((x: number, y: number) => {
+    if (isPainting) {
+      handlePixelToggle(x, y);
+    }
+  }, [isPainting, handlePixelToggle]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPainting(false);
+    toggledDuringStroke.current = new Set();
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsPainting(false);
+    toggledDuringStroke.current = new Set();
+  }, []);
+
   return (
     <svg 
       width={svgWidth} 
       height={svgHeight}
-      style={{ border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: '#fff' }}
+      style={{ 
+        border: '1px solid var(--border-color)', 
+        borderRadius: '8px', 
+        backgroundColor: '#fff',
+        userSelect: 'none',
+      }}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
     >
       <defs>
         <marker
@@ -55,7 +96,7 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
           refY="3.5"
           orient="auto"
         >
-          <polygon points="0 0, 10 3. 5, 0 7" fill="#888" />
+          <polygon points="0 0, 10 3.5, 0 7" fill="#888" />
         </marker>
       </defs>
       
@@ -107,7 +148,7 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
       ))}
 
       {/* Y-axis tick marks and labels */}
-      {Array. from({ length: gridHeight }, (_, i) => (
+      {Array.from({ length: gridHeight }, (_, i) => (
         <g key={`y-tick-${i}`}>
           <line
             x1={axisOriginX - 4}
@@ -152,7 +193,7 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
       </text>
 
       {/* Comparison shape pixels (red, rendered first/behind) */}
-      {comparisonShape?. pixels.map((pixel) => (
+      {comparisonShape?.pixels.map((pixel) => (
         <circle
           key={`comparison-${pixel.x}-${pixel.y}`}
           cx={toSvgX(pixel.x)}
@@ -180,7 +221,11 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
               fill="transparent"
               stroke="transparent"
               style={{ cursor: 'pointer' }}
-              onClick={() => onPixelClick(pixel.x, pixel.y)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleMouseDown(pixel.x, pixel.y);
+              }}
+              onMouseEnter={() => handleMouseEnter(pixel.x, pixel.y)}
             />
           );
         }
@@ -192,10 +237,14 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
             cy={toSvgY(pixel.y)}
             r={PIXEL_RADIUS}
             fill={pixel.active ? 'var(--pixel-active)' : 'var(--pixel-inactive)'}
-            stroke={pixel.active ?  'var(--pixel-active)' : '#ccc'}
+            stroke={pixel.active ? 'var(--pixel-active)' : '#ccc'}
             strokeWidth={1.5}
             style={{ cursor: 'pointer', transition: 'fill 0.15s ease' }}
-            onClick={() => onPixelClick(pixel.x, pixel. y)}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleMouseDown(pixel.x, pixel.y);
+            }}
+            onMouseEnter={() => handleMouseEnter(pixel.x, pixel.y)}
           />
         );
       })}
@@ -227,16 +276,16 @@ export const PixelGrid: React.FC<PixelGridProps> = ({
       {comparisonShape && (
         <g style={{ pointerEvents: 'none' }}>
           <circle
-            cx={toSvgX(comparisonShape. centroid.x)}
-            cy={toSvgY(comparisonShape. centroid.y)}
+            cx={toSvgX(comparisonShape.centroid.x)}
+            cy={toSvgY(comparisonShape.centroid.y)}
             r={5}
             fill="#cc0000"
             stroke="#fff"
             strokeWidth={2}
           />
           <circle
-            cx={toSvgX(comparisonShape. centroid.x)}
-            cy={toSvgY(comparisonShape. centroid.y)}
+            cx={toSvgX(comparisonShape.centroid.x)}
+            cy={toSvgY(comparisonShape.centroid.y)}
             r={12}
             fill="none"
             stroke="#cc0000"
