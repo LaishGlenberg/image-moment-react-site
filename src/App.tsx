@@ -1,4 +1,4 @@
-import React from 'react';
+//import React from 'react';
 import { usePixelGrid } from './hooks/usePixelGrid';
 import { PixelGrid } from './components/PixelGrid';
 import { FormulaPanel } from './components/FormulaPanel';
