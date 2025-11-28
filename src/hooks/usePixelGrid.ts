@@ -14,23 +14,30 @@ interface UsePixelGridProps {
   height: number;
 }
 
+const MAX_ZOOM_FACTOR = 2.0;
+
 export function usePixelGrid({ width, height }: UsePixelGridProps) {
+
+    // Create a larger grid to accommodate zooming out
+  const maxWidth = Math.floor(width * MAX_ZOOM_FACTOR);
+  const maxHeight = Math.floor(height * MAX_ZOOM_FACTOR);
+
 
   // Reset grid when dimensions change
   useEffect(() => {
     const grid: Pixel[] = [];
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
+    for (let y = 0; y < maxHeight; y++) {
+      for (let x = 0; x < maxWidth; x++) {
         grid.push({ x, y, active: false });
       }
     }
     setPixels(grid);
-  }, [width, height]);
+  }, [maxWidth, maxHeight]);
 
   const [pixels, setPixels] = useState<Pixel[]>(() => {
     const grid: Pixel[] = [];
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
+    for (let y = 0; y < maxHeight; y++) {
+      for (let x = 0; x < maxWidth; x++) {
         grid.push({ x, y, active: false });
       }
     }
