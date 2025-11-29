@@ -78,6 +78,17 @@ function App() {
         <p style={{ color: '#666', fontSize: '13px', marginTop: '4px' }}>
           Click on pixels to activate them and see real-time moment calculations
         </p>
+        <p style={{ color: '#666', fontSize: '13px', marginTop: '4px' }}>
+          Developed by{" "}
+          <a
+            href="https://www.linkedin.com/in/laish-glenberg"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#1036ceff', textDecoration: 'underline' }}
+          >
+            Laish Glenberg
+          </a>
+        </p>
       </div>
 
       {/* TOP LEFT - Raw Moments and Centroid */}
